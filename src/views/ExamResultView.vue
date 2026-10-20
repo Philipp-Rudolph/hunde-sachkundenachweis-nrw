@@ -83,6 +83,7 @@ function startNew() {
       <h2 id="exam-wrong-heading">Falsch oder nicht beantwortet ({{ wrongItems.length }})</h2>
       <WrongAnswerList :items="wrongItems" />
     </section>
+    <p v-else>Alle Fragen richtig beantwortet.</p>
   </section>
 </template>
 

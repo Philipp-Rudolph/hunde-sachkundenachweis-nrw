@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'
-import { categories } from '@/data'
+import { categories, questions } from '@/data'
 import type { Category } from '@/types/quiz'
 import { useProgressStore } from '@/stores/progress'
 
@@ -14,7 +14,11 @@ const accuracy = computed(() =>
 )
 
 const rows = computed(() =>
-  categories.map((category) => ({ category, summary: progress.categoryProgress(category.id) })),
+  categories.map((category) => ({
+    category,
+    summary: progress.categoryProgress(category.id),
+    hasProgress: questions.some((q) => q.categoryId === category.id && progress.stats[q.id]),
+  })),
 )
 
 function resetCategory(category: Category) {
@@ -33,6 +37,11 @@ function resetAll() {
 <template>
   <section>
     <h1>Statistik</h1>
+
+    <div v-if="progress.answeredCount === 0" class="empty">
+      <p>Du hast noch keine Fragen beantwortet. Sobald du übst, erscheint hier dein Fortschritt.</p>
+      <RouterLink :to="{ name: 'categories' }" class="btn">Jetzt üben</RouterLink>
+    </div>
 
     <dl class="summary">
       <div class="summary__item">
@@ -58,7 +67,7 @@ function resetAll() {
 
     <h2>Nach Kategorie</h2>
     <ul class="rows">
-      <li v-for="{ category, summary } in rows" :key="category.id" class="row">
+      <li v-for="{ category, summary, hasProgress } in rows" :key="category.id" class="row">
         <div class="row__head">
           <span class="row__name">{{ category.name }}</span>
           <span class="row__count">{{ summary.learned }} / {{ summary.total }}</span>
@@ -68,19 +77,40 @@ function resetAll() {
           :max="summary.total"
           :label="`Gelernte Fragen in ${category.name}`"
         />
-        <button type="button" class="row__reset" @click="resetCategory(category)">
+        <button
+          v-if="hasProgress"
+          type="button"
+          class="row__reset"
+          @click="resetCategory(category)"
+        >
           Zurücksetzen<span class="visually-hidden">: {{ category.name }}</span>
         </button>
       </li>
     </ul>
 
-    <button type="button" class="btn btn--secondary btn--block" @click="resetAll">
+    <button
+      v-if="progress.answeredCount > 0"
+      type="button"
+      class="btn btn--secondary btn--block"
+      @click="resetAll"
+    >
       Gesamten Fortschritt zurücksetzen
     </button>
   </section>
 </template>
 
 <style scoped>
+.empty {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}
+
+.empty p {
+  margin-top: 0;
+}
+
 .summary {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
