@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useExamStore } from '@/stores/exam'
 import { useQuizStore } from '@/stores/quiz'
 import CategoriesView from '@/views/CategoriesView.vue'
+import ExamResultView from '@/views/ExamResultView.vue'
+import ExamView from '@/views/ExamView.vue'
 import HomeView from '@/views/HomeView.vue'
 import QuizView from '@/views/QuizView.vue'
 import ResultView from '@/views/ResultView.vue'
@@ -23,6 +26,18 @@ const router = createRouter({
       name: 'result',
       component: ResultView,
       beforeEnter: () => (useQuizStore().finished ? true : { name: 'home' }),
+    },
+    {
+      path: '/pruefung',
+      name: 'exam',
+      component: ExamView,
+      beforeEnter: () => (useExamStore().inProgress ? true : { name: 'home' }),
+    },
+    {
+      path: '/pruefung/ergebnis',
+      name: 'exam-result',
+      component: ExamResultView,
+      beforeEnter: () => (useExamStore().submitted ? true : { name: 'home' }),
     },
     { path: '/statistik', name: 'stats', component: StatsView },
     { path: '/:pathMatch(.*)*', redirect: { name: 'home' } },

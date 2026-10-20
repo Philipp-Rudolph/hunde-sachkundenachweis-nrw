@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import ProgressBar from '@/components/ProgressBar.vue'
+import { EXAM_CONFIG } from '@/config/exam'
 import { quizData } from '@/data'
 import { RANDOM_SESSION_SIZES } from '@/lib/sessionBuilder'
+import { useExamStore } from '@/stores/exam'
 import { useProgressStore } from '@/stores/progress'
 import { useQuizStore } from '@/stores/quiz'
 import { useSettingsStore } from '@/stores/settings'
@@ -11,6 +13,7 @@ const router = useRouter()
 const settings = useSettingsStore()
 const progress = useProgressStore()
 const quiz = useQuizStore()
+const exam = useExamStore()
 
 function startRandom() {
   if (quiz.startRandom()) router.push({ name: 'quiz' })
@@ -18,6 +21,11 @@ function startRandom() {
 
 function startMistakes() {
   if (quiz.startMistakes()) router.push({ name: 'quiz' })
+}
+
+function startExam() {
+  exam.start()
+  router.push({ name: 'exam' })
 }
 </script>
 
@@ -81,6 +89,22 @@ function startMistakes() {
         >
           Fehler wiederholen
         </button>
+      </div>
+
+      <div class="mode">
+        <span class="mode__title">Prüfungssimulation</span>
+        <span class="mode__desc">
+          {{ EXAM_CONFIG.questionCount }} zufällige Fragen, Auswertung erst am Ende. Bestanden ab
+          {{ Math.round(EXAM_CONFIG.passRatio * 100) }} % richtigen Antworten.
+        </span>
+        <label class="settings__row">
+          <input v-model="settings.examTimed" type="checkbox" />
+          Mit Zeitlimit ({{ EXAM_CONFIG.timeLimitMinutes }} Minuten)
+        </label>
+        <span class="mode__note"
+          >Vorläufige Übungswerte, nicht die offiziellen Prüfungsbedingungen.</span
+        >
+        <button type="button" class="btn" @click="startExam">Prüfung starten</button>
       </div>
     </div>
 
@@ -166,6 +190,12 @@ a.mode:hover {
 .mode__desc {
   color: var(--color-text-muted);
   font-size: 0.875rem;
+}
+
+.mode__note {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
 }
 
 .mode__sizes {
