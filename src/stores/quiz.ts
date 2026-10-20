@@ -2,11 +2,18 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { categories, questions as allQuestions } from '@/data'
 import { evaluateOptions, isAnswerCorrect, scoreSession } from '@/lib/scoring'
-import { arrangeOptions, buildCategorySession, type DisplayedOption } from '@/lib/sessionBuilder'
+import {
+  arrangeOptions,
+  buildCategorySession,
+  buildMistakesSession,
+  buildRandomSession,
+  type DisplayedOption,
+} from '@/lib/sessionBuilder'
 import type { OptionId, Question } from '@/types/quiz'
+import { useProgressStore } from './progress'
 import { useSettingsStore } from './settings'
 
-export type QuizMode = 'category'
+export type QuizMode = 'category' | 'random' | 'mistakes'
 
 export interface SessionInfo {
   mode: QuizMode
@@ -22,6 +29,7 @@ export interface AnswerRecord {
 
 export const useQuizStore = defineStore('quiz', () => {
   const settings = useSettingsStore()
+  const progress = useProgressStore()
 
   const info = ref<SessionInfo | null>(null)
   const questions = ref<Question[]>([])
@@ -63,13 +71,41 @@ export const useQuizStore = defineStore('quiz', () => {
     finished.value = false
   }
 
-  function startCategory(categoryId: number) {
+  /** Each start function returns false if there is nothing to play. */
+  function startCategory(categoryId: number): boolean {
     const category = categories.find((c) => c.id === categoryId)
-    if (!category) return
+    if (!category) return false
     start(
       { mode: 'category', title: category.name, categoryId },
       buildCategorySession(allQuestions, categoryId, { shuffle: settings.shuffleQuestions }),
     )
+    return true
+  }
+
+  function startRandom(count: number = settings.randomCount): boolean {
+    start({ mode: 'random', title: 'Zufallstraining' }, buildRandomSession(allQuestions, count))
+    return true
+  }
+
+  function startMistakes(): boolean {
+    const session = buildMistakesSession(allQuestions, progress.wrongIds)
+    if (session.length === 0) return false
+    start({ mode: 'mistakes', title: 'Fehler wiederholen' }, session)
+    return true
+  }
+
+  /** Starts a fresh session of the current mode. */
+  function restart(): boolean {
+    switch (info.value?.mode) {
+      case 'category':
+        return info.value.categoryId !== undefined && startCategory(info.value.categoryId)
+      case 'random':
+        return startRandom()
+      case 'mistakes':
+        return startMistakes()
+      default:
+        return false
+    }
   }
 
   /** Restarts the session with only the questions answered wrong. */
@@ -92,11 +128,9 @@ export const useQuizStore = defineStore('quiz', () => {
   function check() {
     const question = currentQuestion.value
     if (!question || !canCheck.value) return
-    answers.value.push({
-      questionId: question.id,
-      selected: [...selection.value],
-      correct: isAnswerCorrect(question, selection.value),
-    })
+    const correct = isAnswerCorrect(question, selection.value)
+    answers.value.push({ questionId: question.id, selected: [...selection.value], correct })
+    progress.record(question.id, correct)
   }
 
   function next() {
@@ -129,6 +163,9 @@ export const useQuizStore = defineStore('quiz', () => {
     wrongAnswers,
     start,
     startCategory,
+    startRandom,
+    startMistakes,
+    restart,
     repeatWrong,
     toggleOption,
     check,

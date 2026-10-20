@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useProgressStore } from '@/stores/progress'
 import { useQuizStore } from '@/stores/quiz'
 
 const router = useRouter()
 const quiz = useQuizStore()
+const progress = useProgressStore()
 
 const percent = computed(() => Math.round(quiz.score.ratio * 100))
 
@@ -27,11 +29,21 @@ function repeatWrong() {
   router.push({ name: 'quiz' })
 }
 
+const restartLabel = computed(() => {
+  switch (quiz.info?.mode) {
+    case 'category':
+      return 'Kategorie neu starten'
+    case 'random':
+      return 'Neue Zufallsrunde'
+    case 'mistakes':
+      return progress.wrongIds.length > 0 ? 'Verbleibende Fehler wiederholen' : null
+    default:
+      return null
+  }
+})
+
 function restart() {
-  const categoryId = quiz.info?.categoryId
-  if (categoryId === undefined) return
-  quiz.startCategory(categoryId)
-  router.push({ name: 'quiz' })
+  if (quiz.restart()) router.push({ name: 'quiz' })
 }
 </script>
 
@@ -47,16 +59,18 @@ function restart() {
       <button v-if="wrongItems.length > 0" type="button" class="btn" @click="repeatWrong">
         Falsche Fragen wiederholen
       </button>
-      <button
-        v-if="quiz.info?.categoryId !== undefined"
-        type="button"
-        class="btn btn--secondary"
-        @click="restart"
-      >
-        Kategorie neu starten
+      <button v-if="restartLabel" type="button" class="btn btn--secondary" @click="restart">
+        {{ restartLabel }}
       </button>
-      <RouterLink :to="{ name: 'categories' }" class="btn btn--secondary">
+      <RouterLink
+        v-if="quiz.info?.mode === 'category'"
+        :to="{ name: 'categories' }"
+        class="btn btn--secondary"
+      >
         Andere Kategorie
+      </RouterLink>
+      <RouterLink v-else :to="{ name: 'home' }" class="btn btn--secondary">
+        Zur Startseite
       </RouterLink>
     </div>
 

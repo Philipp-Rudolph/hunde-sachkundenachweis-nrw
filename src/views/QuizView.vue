@@ -66,7 +66,10 @@ watch(
       <button v-else type="button" class="btn btn--block" @click="quiz.next">
         {{ quiz.isLast ? 'Zum Ergebnis' : 'Weiter' }}
       </button>
-      <RouterLink :to="{ name: 'categories' }" class="btn btn--secondary btn--block">
+      <RouterLink
+        :to="{ name: quiz.info?.mode === 'category' ? 'categories' : 'home' }"
+        class="btn btn--secondary btn--block"
+      >
         Abbrechen
       </RouterLink>
     </div>

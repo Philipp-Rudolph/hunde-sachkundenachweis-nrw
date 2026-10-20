@@ -1,13 +1,17 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { questions } from '@/data'
+import { useProgressStore } from '@/stores/progress'
 import { useQuizStore } from '@/stores/quiz'
 import { useSettingsStore } from '@/stores/settings'
 
 const category2 = questions.filter((q) => q.categoryId === 2)
 
 describe('quiz store', () => {
-  beforeEach(() => setActivePinia(createPinia()))
+  beforeEach(() => {
+    localStorage.clear()
+    setActivePinia(createPinia())
+  })
 
   it('starts a category session in catalogue order', () => {
     const quiz = useQuizStore()
@@ -119,5 +123,51 @@ describe('quiz store', () => {
     const ids = quiz.currentOptions.map((o) => o.id)
     expect([...ids].sort()).toEqual(quiz.currentQuestion!.options.map((o) => o.id).sort())
     expect(quiz.currentOptions.map((o) => o.label)).toEqual(['A', 'B', 'C', 'D'])
+  })
+
+  it('records every checked answer in the progress store', () => {
+    const quiz = useQuizStore()
+    const progress = useProgressStore()
+    quiz.startCategory(2)
+    const question = quiz.currentQuestion!
+    for (const id of question.correctAnswers) quiz.toggleOption(id)
+    quiz.check()
+    expect(progress.stats[question.id]).toMatchObject({ attempts: 1, lastResult: 'correct' })
+  })
+
+  it('starts random training with the configured size', () => {
+    const quiz = useQuizStore()
+    useSettingsStore().randomCount = 10
+    expect(quiz.startRandom()).toBe(true)
+    expect(quiz.info?.mode).toBe('random')
+    expect(quiz.total).toBe(10)
+    expect(new Set(quiz.questions.map((q) => q.id)).size).toBe(10)
+    expect(quiz.startRandom(50)).toBe(true)
+    expect(quiz.total).toBe(50)
+  })
+
+  it('starts the mistakes mode with the questions last answered wrong', () => {
+    const quiz = useQuizStore()
+    const progress = useProgressStore()
+    expect(quiz.startMistakes()).toBe(false)
+    expect(quiz.hasSession).toBe(false)
+
+    progress.record('q050', false)
+    progress.record('q006', false)
+    progress.record('q016', false)
+    progress.record('q016', true) // fixed since
+    expect(quiz.startMistakes()).toBe(true)
+    expect(quiz.info?.mode).toBe('mistakes')
+    expect(quiz.questions.map((q) => q.id)).toEqual(['q006', 'q050'])
+  })
+
+  it('restarts a fresh session of the same mode', () => {
+    const quiz = useQuizStore()
+    quiz.startCategory(3)
+    quiz.toggleOption('A')
+    quiz.check()
+    expect(quiz.restart()).toBe(true)
+    expect(quiz.info).toMatchObject({ mode: 'category', categoryId: 3 })
+    expect(quiz.answers).toEqual([])
   })
 })

@@ -13,6 +13,7 @@ describe('category practice flow', () => {
   })
 
   it('can be played to the end with a correct result', async () => {
+    localStorage.clear()
     const pinia = createPinia()
     setActivePinia(pinia)
     router.push('/kategorien')
