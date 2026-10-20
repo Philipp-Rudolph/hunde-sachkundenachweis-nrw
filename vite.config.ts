@@ -15,6 +15,8 @@ export default defineConfig({
     VitePWA({
       disable: Boolean(process.env.VITEST),
       registerType: 'autoUpdate',
+      // Icons are already matched by workbox.globPatterns; the plugin adds the manifest itself.
+      includeManifestIcons: false,
       manifest: {
         name: 'Sachkunde-Quiz Hund NRW',
         short_name: 'Sachkunde-Quiz',
@@ -39,7 +41,7 @@ export default defineConfig({
       },
       workbox: {
         // questions.json is bundled into the JS; question images are hashed PNG assets.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
       },
     }),
   ],
