@@ -4,6 +4,7 @@ import CategoriesView from '@/views/CategoriesView.vue'
 import HomeView from '@/views/HomeView.vue'
 import QuizView from '@/views/QuizView.vue'
 import ResultView from '@/views/ResultView.vue'
+import StatsView from '@/views/StatsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,6 +24,7 @@ const router = createRouter({
       component: ResultView,
       beforeEnter: () => (useQuizStore().finished ? true : { name: 'home' }),
     },
+    { path: '/statistik', name: 'stats', component: StatsView },
     { path: '/:pathMatch(.*)*', redirect: { name: 'home' } },
   ],
   scrollBehavior: () => ({ top: 0 }),
