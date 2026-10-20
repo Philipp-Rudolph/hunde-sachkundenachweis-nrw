@@ -7,7 +7,7 @@
   --color-primary: #1f5f8b;
   --color-primary-hover: #174a6d;
   --color-on-primary: #ffffff;
-  --color-focus: #e08a00;
+  --color-focus: #c06c00;
   --color-success: #1d6b38;
   --color-success-bg: #e3f3e8;
   --color-error: #a3241b;
@@ -139,4 +139,47 @@ img {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Headings and containers that receive focus programmatically. */
+[tabindex='-1']:focus {
+  outline: none;
+}
+
+.skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 20;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.keyboard-hint {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+@media (hover: none) {
+  .keyboard-hint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }

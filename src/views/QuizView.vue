@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, nextTick, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ProgressBar from '@/components/ProgressBar.vue'
 import QuestionCard from '@/components/QuestionCard.vue'
+import { useQuizKeyboard } from '@/composables/useQuizKeyboard'
 import { useQuizStore } from '@/stores/quiz'
 
 const router = useRouter()
@@ -17,6 +18,35 @@ const resultMessage = computed(() => {
   return `Leider falsch. Richtig ${correctLabels.length > 1 ? 'sind' : 'ist'}: ${correctLabels.join(', ')}`
 })
 const answerCorrect = computed(() => quiz.currentAnswer?.correct ?? false)
+const primaryLabel = computed(() => {
+  if (!quiz.isChecked) return 'Prüfen'
+  return quiz.isLast ? 'Zum Ergebnis' : 'Weiter'
+})
+
+const card = useTemplateRef<InstanceType<typeof QuestionCard>>('card')
+
+// Prüfen and Weiter share one button, so focus stays put after checking.
+function primaryAction() {
+  if (quiz.isChecked) quiz.next()
+  else quiz.check()
+}
+
+useQuizKeyboard({
+  onPrimary: primaryAction,
+  onToggleLabel: (label) => {
+    const option = quiz.currentOptions.find((o) => o.label === label)
+    if (option) quiz.toggleOption(option.id)
+  },
+})
+
+watch(
+  () => quiz.currentQuestion?.id,
+  async (id, previousId) => {
+    if (!id || !previousId) return
+    await nextTick()
+    card.value?.focusHeading()
+  },
+)
 
 watch(
   () => quiz.finished,
@@ -29,12 +59,13 @@ watch(
 <template>
   <section v-if="quiz.currentQuestion" class="quiz">
     <header class="quiz__header">
-      <p class="quiz__title">{{ quiz.info?.title }}</p>
+      <h1 class="quiz__title">{{ quiz.info?.title }}</h1>
       <p class="quiz__position">Frage {{ quiz.currentIndex + 1 }} von {{ quiz.total }}</p>
       <ProgressBar :value="answeredCount" :max="quiz.total" label="Fortschritt in dieser Runde" />
     </header>
 
     <QuestionCard
+      ref="card"
       :key="quiz.currentQuestion.id"
       :question="quiz.currentQuestion"
       :options="quiz.currentOptions"
@@ -55,16 +86,12 @@ watch(
 
     <div class="quiz__actions">
       <button
-        v-if="!quiz.isChecked"
         type="button"
         class="btn btn--block"
-        :disabled="!quiz.canCheck"
-        @click="quiz.check"
+        :disabled="!quiz.isChecked && !quiz.canCheck"
+        @click="primaryAction"
       >
-        Prüfen
-      </button>
-      <button v-else type="button" class="btn btn--block" @click="quiz.next">
-        {{ quiz.isLast ? 'Zum Ergebnis' : 'Weiter' }}
+        {{ primaryLabel }}
       </button>
       <RouterLink
         :to="{ name: quiz.info?.mode === 'category' ? 'categories' : 'home' }"
@@ -73,6 +100,7 @@ watch(
         Abbrechen
       </RouterLink>
     </div>
+    <p class="keyboard-hint">Tastatur: A–D wählt Antworten, Enter prüft bzw. geht weiter.</p>
   </section>
 </template>
 
@@ -83,6 +111,7 @@ watch(
 
 .quiz__title {
   margin: 0;
+  font-size: 1rem;
   font-weight: 600;
 }
 

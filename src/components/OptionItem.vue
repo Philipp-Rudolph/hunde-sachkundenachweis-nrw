@@ -45,6 +45,7 @@ const feedbackIcon = computed(() => (props.feedback ? FEEDBACK_ICON[props.feedba
       :checked="selected"
       :disabled="locked"
       @change="emit('toggle')"
+      @keydown.enter.prevent="!locked && emit('toggle')"
     />
     <span class="option__label" aria-hidden="true">{{ option.label }}</span>
     <span class="option__text">

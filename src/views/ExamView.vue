@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import ProgressBar from '@/components/ProgressBar.vue'
 import QuestionCard from '@/components/QuestionCard.vue'
+import { useQuizKeyboard } from '@/composables/useQuizKeyboard'
 import { formatDuration, remainingSeconds } from '@/lib/exam'
 import { useExamStore } from '@/stores/exam'
 
 const WARNING_SECONDS = 5 * 60
+/** Remaining times (in seconds) announced to screen readers. */
+const ANNOUNCE_AT = [5 * 60, 60]
 
 const router = useRouter()
 const exam = useExamStore()
@@ -19,6 +22,44 @@ const remaining = computed(() =>
   exam.deadline === null ? null : remainingSeconds(exam.deadline, now.value),
 )
 const isLast = computed(() => exam.currentIndex === exam.total - 1)
+
+const card = useTemplateRef<InstanceType<typeof QuestionCard>>('card')
+const overviewHeading = useTemplateRef<HTMLHeadingElement>('overviewHeading')
+const timeAnnouncement = ref('')
+
+watch(remaining, (current, previous) => {
+  if (current === null || previous === null || previous === undefined) return
+  const crossed = ANNOUNCE_AT.find((t) => previous > t && current <= t)
+  if (crossed !== undefined) {
+    timeAnnouncement.value = crossed >= 120 ? `Noch ${crossed / 60} Minuten.` : 'Noch eine Minute.'
+  }
+})
+
+watch(
+  () => exam.currentQuestion?.id,
+  async (id, previousId) => {
+    if (!id || !previousId || view.value !== 'question') return
+    await nextTick()
+    card.value?.focusHeading()
+  },
+)
+
+watch(view, async (current) => {
+  await nextTick()
+  if (current === 'overview') overviewHeading.value?.focus()
+  else card.value?.focusHeading()
+})
+
+useQuizKeyboard({
+  onPrimary: () => {
+    if (view.value === 'question') nextOrOverview()
+  },
+  onToggleLabel: (label) => {
+    if (view.value !== 'question') return
+    const option = exam.currentOptions.find((o) => o.label === label)
+    if (option) exam.toggleOption(option.id)
+  },
+})
 
 function finish(timedOut = false) {
   exam.submit({ timedOut })
@@ -72,7 +113,7 @@ function statusLabel(questionId: string): string {
   <section v-if="exam.currentQuestion" class="exam">
     <header class="exam__header">
       <div class="exam__meta">
-        <p class="exam__title">Prüfungssimulation</p>
+        <h1 class="exam__title">Prüfungssimulation</h1>
         <p
           v-if="remaining !== null"
           class="exam__timer"
@@ -94,6 +135,7 @@ function statusLabel(questionId: string): string {
 
     <template v-if="view === 'question'">
       <QuestionCard
+        ref="card"
         :key="exam.currentQuestion.id"
         :question="exam.currentQuestion"
         :options="exam.currentOptions"
@@ -131,7 +173,7 @@ function statusLabel(questionId: string): string {
     </template>
 
     <section v-else aria-labelledby="overview-heading" class="overview">
-      <h2 id="overview-heading">Übersicht</h2>
+      <h2 id="overview-heading" ref="overviewHeading" tabindex="-1">Übersicht</h2>
       <p>
         {{ exam.answeredCount }} von {{ exam.total }} beantwortet ·
         {{ exam.flagged.length }} markiert
@@ -169,6 +211,10 @@ function statusLabel(questionId: string): string {
       </div>
     </section>
 
+    <p v-if="view === 'question'" class="keyboard-hint">
+      Tastatur: A–D wählt Antworten, Enter geht weiter.
+    </p>
+    <p class="visually-hidden" aria-live="assertive">{{ timeAnnouncement }}</p>
     <RouterLink :to="{ name: 'home' }" class="exam__abort">Prüfung abbrechen</RouterLink>
   </section>
 </template>
@@ -187,6 +233,7 @@ function statusLabel(questionId: string): string {
 
 .exam__title {
   margin: 0;
+  font-size: 1rem;
   font-weight: 600;
 }
 

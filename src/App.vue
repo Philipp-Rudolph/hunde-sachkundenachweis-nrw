@@ -1,4 +1,27 @@
+<script setup lang="ts">
+import { nextTick, useTemplateRef, watch } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const main = useTemplateRef<HTMLElement>('main')
+
+// After client-side navigation, move focus to the new page heading so screen readers
+// announce it. The initial page load keeps the browser's default focus.
+watch(
+  () => route.name,
+  async (_, previous) => {
+    if (previous === undefined) return
+    await nextTick()
+    const heading = main.value?.querySelector<HTMLElement>('h1')
+    if (!heading) return
+    heading.setAttribute('tabindex', '-1')
+    heading.focus()
+  },
+)
+</script>
+
 <template>
+  <a href="#main" class="skip-link">Zum Inhalt springen</a>
   <header class="app-header">
     <RouterLink :to="{ name: 'home' }" class="app-header__brand">Sachkunde-Quiz</RouterLink>
     <nav aria-label="Hauptnavigation" class="app-header__nav">
@@ -6,7 +29,7 @@
       <RouterLink :to="{ name: 'stats' }">Statistik</RouterLink>
     </nav>
   </header>
-  <main class="app-main">
+  <main id="main" ref="main" class="app-main" tabindex="-1">
     <RouterView />
   </main>
 </template>

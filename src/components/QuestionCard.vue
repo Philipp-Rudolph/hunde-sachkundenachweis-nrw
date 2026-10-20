@@ -20,6 +20,15 @@ const imageUrl = computed(() =>
 )
 const altText = computed(() => `Zeichnung eines Hundes zur Frage ${props.question.number}`)
 
+const heading = useTemplateRef<HTMLHeadingElement>('heading')
+
+/** Moves focus to the question text, e.g. after switching questions. */
+function focusHeading() {
+  heading.value?.focus()
+}
+
+defineExpose({ focusHeading })
+
 const zoomed = ref(false)
 const zoomTrigger = useTemplateRef<HTMLButtonElement>('zoomTrigger')
 const closeButton = useTemplateRef<HTMLButtonElement>('closeButton')
@@ -40,14 +49,14 @@ async function closeZoom() {
 <template>
   <article class="question">
     <p class="question__number">Frage {{ question.number }}</p>
-    <h2 class="question__text">{{ question.question }}</h2>
+    <h2 ref="heading" class="question__text" tabindex="-1">{{ question.question }}</h2>
 
     <button
       v-if="question.image && imageUrl"
       ref="zoomTrigger"
       type="button"
       class="question__image-button"
-      aria-label="Bild vergrößern"
+      :aria-label="`${altText} – zum Vergrößern antippen`"
       @click="openZoom"
     >
       <img

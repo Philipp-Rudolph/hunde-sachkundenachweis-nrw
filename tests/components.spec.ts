@@ -57,7 +57,7 @@ describe('QuestionCard', () => {
     expect(img.attributes('alt')).toBe(`Zeichnung eines Hundes zur Frage ${imageQuestion.number}`)
 
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
-    await wrapper.get('button[aria-label="Bild vergrößern"]').trigger('click')
+    await wrapper.get('button[aria-label$="zum Vergrößern antippen"]').trigger('click')
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
     await wrapper.get('[role="dialog"] button').trigger('click')
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
