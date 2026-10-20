@@ -100,6 +100,22 @@ describe('exam store', () => {
     expect(exam.result).toMatchObject({ correct: exam.total, passed: true })
   })
 
+  it('passes with exactly passMinCorrect correct answers and fails with one less', () => {
+    for (const [correctCount, passed] of [
+      [EXAM_CONFIG.passMinCorrect, true],
+      [EXAM_CONFIG.passMinCorrect - 1, false],
+    ] as const) {
+      const exam = useExamStore()
+      exam.start({ seed: 9 })
+      for (let i = 0; i < correctCount; i++) {
+        exam.goTo(i)
+        for (const id of exam.currentQuestion!.correctAnswers) exam.toggleOption(id)
+      }
+      exam.submit()
+      expect(exam.result).toMatchObject({ correct: correctCount, passed })
+    }
+  })
+
   it('marks a timed-out submission', () => {
     const exam = useExamStore()
     exam.start({ seed: 7 })

@@ -12,9 +12,9 @@ const sample = [q6, q16, q1, q31]
 
 describe('isPassed', () => {
   it('passes at or above the threshold', () => {
-    expect(isPassed(8, 10, 0.8)).toBe(true)
-    expect(isPassed(7, 10, 0.8)).toBe(false)
-    expect(isPassed(0, 0, 0)).toBe(false)
+    expect(isPassed(20, 20)).toBe(true)
+    expect(isPassed(21, 20)).toBe(true)
+    expect(isPassed(19, 20)).toBe(false)
   })
 })
 
@@ -28,7 +28,7 @@ describe('evaluateExam', () => {
         [q1.id]: q1.correctAnswers,
         // q31 unanswered
       },
-      0.5,
+      2,
     )
     expect(result).toMatchObject({ correct: 2, total: 4, ratio: 0.5, passed: true, unanswered: 1 })
     expect(result.questions.find((r) => r.questionId === q31.id)).toMatchObject({
@@ -43,7 +43,7 @@ describe('evaluateExam', () => {
   })
 
   it('fails below the threshold', () => {
-    expect(evaluateExam(sample, {}, 0.5)).toMatchObject({
+    expect(evaluateExam(sample, {}, 2)).toMatchObject({
       correct: 0,
       passed: false,
       unanswered: 4,
@@ -66,11 +66,13 @@ describe('timer helpers', () => {
 })
 
 describe('exam config', () => {
-  it('has sane placeholder values', () => {
+  it('matches the official exam format and has a sane time limit', () => {
+    expect(EXAM_CONFIG.questionCount).toBe(30)
+    expect(EXAM_CONFIG.passMinCorrect).toBe(20)
     expect(EXAM_CONFIG.questionCount).toBeGreaterThan(0)
     expect(EXAM_CONFIG.questionCount).toBeLessThanOrEqual(questions.length)
-    expect(EXAM_CONFIG.passRatio).toBeGreaterThan(0)
-    expect(EXAM_CONFIG.passRatio).toBeLessThanOrEqual(1)
+    expect(EXAM_CONFIG.passMinCorrect).toBeGreaterThan(0)
+    expect(EXAM_CONFIG.passMinCorrect).toBeLessThanOrEqual(EXAM_CONFIG.questionCount)
     expect(EXAM_CONFIG.timeLimitMinutes).toBeGreaterThan(0)
   })
 })

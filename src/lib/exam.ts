@@ -27,15 +27,15 @@ export interface ExamResult {
   byCategory: CategoryResult[]
 }
 
-export function isPassed(correct: number, total: number, passRatio: number): boolean {
-  return total > 0 && correct / total >= passRatio
+export function isPassed(correct: number, passMinCorrect: number): boolean {
+  return correct >= passMinCorrect
 }
 
 /** Scores an exam. Unanswered questions count as wrong. */
 export function evaluateExam(
   questions: readonly Question[],
   answers: Readonly<Record<string, readonly OptionId[]>>,
-  passRatio: number,
+  passMinCorrect: number,
 ): ExamResult {
   const results = questions.map((q): ExamQuestionResult => {
     const selected = [...(answers[q.id] ?? [])]
@@ -63,7 +63,7 @@ export function evaluateExam(
     correct,
     total,
     ratio: total === 0 ? 0 : correct / total,
-    passed: isPassed(correct, total, passRatio),
+    passed: isPassed(correct, passMinCorrect),
     unanswered: results.filter((r) => !r.answered).length,
     questions: results,
     byCategory: [...categories.values()].sort((a, b) => a.categoryId - b.categoryId),

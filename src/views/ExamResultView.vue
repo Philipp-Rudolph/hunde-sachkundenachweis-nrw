@@ -10,7 +10,6 @@ const exam = useExamStore()
 
 const result = computed(() => exam.result)
 const percent = computed(() => Math.round((result.value?.ratio ?? 0) * 100))
-const passPercent = computed(() => Math.round(exam.config.passRatio * 100))
 
 const categoryRows = computed(() =>
   (result.value?.byCategory ?? []).map((row) => ({
@@ -45,7 +44,7 @@ function startNew() {
       <strong>{{ result.correct }} von {{ result.total }}</strong> richtig ({{ percent }} %)
     </p>
     <p class="details">
-      Bestanden ab {{ passPercent }} % richtigen Antworten.
+      Bestanden ab {{ exam.config.passMinCorrect }} von {{ result.total }} richtigen Antworten.
       <template v-if="result.unanswered > 0">
         {{ result.unanswered }}
         {{ result.unanswered === 1 ? 'Frage blieb' : 'Fragen blieben' }} unbeantwortet und
@@ -55,8 +54,8 @@ function startNew() {
     <p v-if="exam.timedOut" class="details details--timeout">
       Die Zeit ist abgelaufen. Die Prüfung wurde automatisch abgegeben.
     </p>
-    <p class="note">
-      Hinweis: Fragenanzahl, Bestehensgrenze und Zeitlimit sind vorläufige Übungswerte.
+    <p v-if="exam.deadline !== null" class="note">
+      Hinweis: Das Zeitlimit ist ein vorläufiger Übungswert.
     </p>
 
     <div class="actions">

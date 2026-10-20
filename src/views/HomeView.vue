@@ -95,15 +95,13 @@ function startExam() {
         <span class="mode__title">Prüfungssimulation</span>
         <span class="mode__desc">
           {{ EXAM_CONFIG.questionCount }} zufällige Fragen, Auswertung erst am Ende. Bestanden ab
-          {{ Math.round(EXAM_CONFIG.passRatio * 100) }} % richtigen Antworten.
+          {{ EXAM_CONFIG.passMinCorrect }} richtigen Antworten.
         </span>
         <label class="settings__row">
           <input v-model="settings.examTimed" type="checkbox" />
           Mit Zeitlimit ({{ EXAM_CONFIG.timeLimitMinutes }} Minuten)
         </label>
-        <span class="mode__note"
-          >Vorläufige Übungswerte, nicht die offiziellen Prüfungsbedingungen.</span
-        >
+        <span class="mode__note">Das Zeitlimit ist ein vorläufiger Übungswert.</span>
         <button type="button" class="btn" @click="startExam">Prüfung starten</button>
       </div>
     </div>

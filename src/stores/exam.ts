@@ -100,7 +100,7 @@ export const useExamStore = defineStore('exam', () => {
   /** Scores the exam once and records every question in the progress statistics. */
   function submit(options: { timedOut?: boolean } = {}) {
     if (!inProgress.value) return
-    const evaluated = evaluateExam(questions.value, answers.value, config.value.passRatio)
+    const evaluated = evaluateExam(questions.value, answers.value, config.value.passMinCorrect)
     for (const r of evaluated.questions) progress.record(r.questionId, r.correct)
     timedOut.value = options.timedOut ?? false
     result.value = evaluated
