@@ -12,12 +12,15 @@ export interface Settings {
   shuffleOptions: boolean
   /** Number of questions in random training. */
   randomCount: RandomSessionSize
+  /** Run the exam simulation with a time limit. */
+  examTimed: boolean
 }
 
 const DEFAULT_SETTINGS: Settings = {
   shuffleQuestions: false,
   shuffleOptions: false,
   randomCount: 20,
+  examTimed: true,
 }
 
 /** Takes valid fields from stored data and falls back to defaults per field. */
@@ -34,6 +37,7 @@ export function parseSettings(data: unknown): Settings | null {
     randomCount: RANDOM_SESSION_SIZES.includes(s.randomCount as RandomSessionSize)
       ? (s.randomCount as RandomSessionSize)
       : DEFAULT_SETTINGS.randomCount,
+    examTimed: typeof s.examTimed === 'boolean' ? s.examTimed : DEFAULT_SETTINGS.examTimed,
   }
 }
 
@@ -49,14 +53,16 @@ export const useSettingsStore = defineStore('settings', () => {
   const shuffleQuestions = ref(initial.shuffleQuestions)
   const shuffleOptions = ref(initial.shuffleOptions)
   const randomCount = ref<RandomSessionSize>(initial.randomCount)
+  const examTimed = ref(initial.examTimed)
 
-  watch([shuffleQuestions, shuffleOptions, randomCount], () => {
+  watch([shuffleQuestions, shuffleOptions, randomCount, examTimed], () => {
     saveState(SETTINGS_STORAGE, {
       shuffleQuestions: shuffleQuestions.value,
       shuffleOptions: shuffleOptions.value,
       randomCount: randomCount.value,
+      examTimed: examTimed.value,
     })
   })
 
-  return { shuffleQuestions, shuffleOptions, randomCount }
+  return { shuffleQuestions, shuffleOptions, randomCount, examTimed }
 })
