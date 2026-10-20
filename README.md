@@ -27,3 +27,9 @@ pnpm generate-pwa-assets  # PWA-Icons aus public/icon.svg erzeugen
 - Leertaste oder Enter: fokussierte Antwort an-/abwählen
 - A–D bzw. 1–4: Antwort mit diesem Buchstaben an-/abwählen
 - Enter (außerhalb von Bedienelementen): Prüfen bzw. Weiter
+
+## Deployment
+
+Jeder Push auf `main` wird per GitHub Action ([.github/workflows/deploy.yml](.github/workflows/deploy.yml))
+getestet, gebaut und auf GitHub Pages veröffentlicht. Der Build setzt dafür `BASE_PATH=/<repo>/`.
+Lokal mit Basis-Pfad testen: `BASE_PATH=/hunde-sachkundenachweis-nrw/ pnpm build && pnpm preview`.
